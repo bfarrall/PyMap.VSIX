@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualStudio.Editor;
@@ -43,6 +43,8 @@ namespace CodeMap
         }
 
         public static int GetIndent(this string text) => text.Length - text.TrimStart().Length;
+
+        public static bool IsPressed(this ModifierKeys keys) => (Keyboard.Modifiers & keys) != 0;
 
         public static int Brightness(this Color color)
         {

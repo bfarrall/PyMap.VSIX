@@ -20,6 +20,15 @@ namespace CodeMap
             get { return Settings.Instance.ShowBookmarkMargin; }
             set { Settings.Instance.ShowBookmarkMargin = value; Settings.Instance.Save(); }
         }
+
+        [Category("Generic options")]
+        [DisplayName("Strict Drag-n-Drop detection")]
+        [Description("Do not start Drag-n-Drop if Ctrl is not pressed.")]
+        public bool StrictDragDetection
+        {
+            get { return Settings.Instance.StrictDragDetection; }
+            set { Settings.Instance.StrictDragDetection = value; Settings.Instance.Save(); }
+        }
     }
 
     public class Settings
@@ -41,6 +50,8 @@ namespace CodeMap
         public static Settings Instance;
 
         public bool ShowBookmarkMargin = true;
+
+        public bool StrictDragDetection = true;
         public double FontSize { get; set; } = 12.0;
         public bool Classes { get; set; } = true;
         public bool Interfaces { get; set; } = true;

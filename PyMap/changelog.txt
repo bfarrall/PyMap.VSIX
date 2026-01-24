@@ -1,3 +1,6 @@
+Release v2.5.2.0
+- #32: Dragging map items does not copy comments
+
 Release v2.5.1.0
 - Improved reliability of drag-n-drop preview indicator rendering for reordering of tree items
 

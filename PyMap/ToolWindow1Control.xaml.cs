@@ -508,7 +508,9 @@ namespace CodeMap
         void codeMapList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             // Only allow drag if Ctrl is pressed and all other conditions are met
-            if (!parser.CanParse(docFile) || !parser.IsCSharp || parser.SortMembers || (Keyboard.Modifiers & ModifierKeys.Control) == 0)
+
+            if (!parser.CanParse(docFile) || !parser.IsCSharp || parser.SortMembers ||
+                (Settings.Instance.StrictDragDetection && !ModifierKeys.Control.IsPressed()))
             {
                 _draggedItem = null;
                 return;
@@ -529,13 +531,17 @@ namespace CodeMap
                 parser.SortMembers || (keyModifiers & ModifierKeys.Control) != ModifierKeys.Control)
                 return;
 
-            if (e.LeftButton == MouseButtonState.Pressed && _draggedItem != null)
+            if (e.LeftButton == MouseButtonState.Pressed && _draggedItem != null && ModifierKeys.Control.IsPressed())
             {
                 var pos = e.GetPosition(null);
                 if (Math.Abs(pos.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
                     Math.Abs(pos.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
                 {
-                    DragDrop.DoDragDrop(codeMapList, _draggedItem, DragDropEffects.Move);
+                    try
+                    {
+                        DragDrop.DoDragDrop(codeMapList, _draggedItem, DragDropEffects.Move);
+                    }
+                    catch { }
                 }
             }
         }
@@ -553,10 +559,11 @@ namespace CodeMap
                 RemoveDropAdorner();
 
                 // prevent dragging over if the document is not C# or razor file
-                if (!parser.CanParse(docFile) || !parser.IsCSharp)
+                if (!parser.CanParse(docFile) || !parser.IsCSharp || !ModifierKeys.Control.IsPressed())
                 {
                     e.Effects = DragDropEffects.None;
                     Mouse.SetCursor(Cursors.None);
+                    RemoveDropAdorner();
                     return;
                 }
 
@@ -591,6 +598,14 @@ namespace CodeMap
             try
             {
                 RemoveDropAdorner();
+
+                if (!ModifierKeys.Control.IsPressed())
+                {
+                    e.Effects = DragDropEffects.Move;
+                    e.Handled = true;
+                    Mouse.SetCursor(Cursors.Arrow);
+                    return;
+                }
 
                 var pos = e.GetPosition(codeMapList);
                 int insertIndex = GetInsertIndex(pos);
