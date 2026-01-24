@@ -136,6 +136,61 @@ namespace CodeMap.Test
         }
 
         [Fact]
+        void Issue_32_GetLinesCount()
+        {
+            Assert.Equal(3, "1\n2\n3".GetLinesCount());
+            Assert.Equal(3, "1\n\n3".GetLinesCount());
+            Assert.Equal(3, "1\n\n3".GetLinesCount());
+
+            Assert.Equal(3, "1\r2\r3".GetLinesCount());
+            Assert.Equal(3, "1\r\r3".GetLinesCount());
+            Assert.Equal(3, "1\r\r3".GetLinesCount());
+
+            Assert.Equal(3, "1\r\n2\r\n3".GetLinesCount());
+            Assert.Equal(3, "1\r\n\r\n3".GetLinesCount());
+            Assert.Equal(4, "1\r\n2\r\n3\r\n".GetLinesCount());
+        }
+
+        /// <summary>
+        /// Issues the 32.
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        void Issue_32()
+        {
+            var code = """
+                using System;
+
+                /// <summary>
+                /// Issues the 32.
+                /// </summary>
+                /// <returns></returns>
+                class NestedClass
+                {
+                    /// <summary>
+                    /// MethodA
+                    /// </summary>
+                    /// <returns></returns>
+                    int MethodA(){}
+                    int MethodB(){}
+                }
+                """;
+
+            var file = code.ToTestInputFile();
+
+            var parser = new SyntaxParser();
+
+            //---------------------
+            parser.SortMembers = false; // no sorting so the items appear as they are in the file
+            parser.GenerateMap(file);
+
+            //---------------------
+            Assert.Equal(4, parser.MemberList[0].LeadingCommentsLineCount); // class
+            Assert.Equal(4, parser.MemberList[1].LeadingCommentsLineCount); // MethodA
+            Assert.Equal(0, parser.MemberList[2].LeadingCommentsLineCount); // MethodB
+        }
+
+        [Fact]
         void Issue_29()
         {
             var code = """

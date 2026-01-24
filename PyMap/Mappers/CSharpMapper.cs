@@ -181,6 +181,7 @@ class CSharpMapper
                     ParentPath = parentPath,
                     Line = method.GetLocation().GetLineSpan().StartLinePosition.Line + lineOffset,
                     EndLine = method.GetLocation().GetLineSpan().EndLinePosition.Line + lineOffset,
+                    LeadingCommentsLineCount = GetLeadingComments(member),
                     Column = method.GetLocation().GetLineSpan().StartLinePosition.Character,
                     Content = method.Identifier.Text,
                     MemberContext = "(" + paramList + ")",
@@ -208,6 +209,7 @@ class CSharpMapper
                 NamespacePath = namespacePath,
                 Line = type.GetLocation().GetLineSpan().StartLinePosition.Line + lineOffset,
                 EndLine = type.GetLocation().GetLineSpan().EndLinePosition.Line + lineOffset,
+                LeadingCommentsLineCount = GetLeadingComments(type),
                 Column = type.GetLocation().GetLineSpan().StartLinePosition.Character,
                 Title = type.Identifier.Text,
                 MemberContext = ": enum",
@@ -218,12 +220,14 @@ class CSharpMapper
         foreach (TypeDeclarationSyntax type in types)
         {
             (var namespacePath, var parentPath) = type.GetParentPath();
+
             var parent = new MemberInfo
             {
                 ParentPath = parentPath,
                 NamespacePath = namespacePath,
                 Line = type.GetLocation().GetLineSpan().StartLinePosition.Line + lineOffset,
                 EndLine = type.GetLocation().GetLineSpan().EndLinePosition.Line + lineOffset,
+                LeadingCommentsLineCount = GetLeadingComments(type),
                 Column = type.GetLocation().GetLineSpan().StartLinePosition.Character,
                 Title = type.Identifier.Text,
                 MemberType = MemberType.Type,
@@ -253,6 +257,9 @@ class CSharpMapper
 
             foreach (var member in type.ChildNodes().OfType<MemberDeclarationSyntax>())
             {
+                // Discover leading comments and get their line count
+                var leadingCommentsLineCount = GetLeadingComments(member);
+
                 MemberInfo info = null;
 
                 if (member is MethodDeclarationSyntax)
@@ -275,7 +282,8 @@ class CSharpMapper
                         ContentType = "    ",
                         Children = new List<MemberInfo>(),
                         IsPublic = method.Modifiers.Any(x => x.ValueText == "public" || x.ValueText == "internal"),
-                        MemberType = MemberType.Method
+                        MemberType = MemberType.Method,
+                        LeadingCommentsLineCount = leadingCommentsLineCount
                     };
                 }
                 else if (member is ConstructorDeclarationSyntax)
@@ -299,7 +307,8 @@ class CSharpMapper
                         ContentType = "    ",
                         Children = new List<MemberInfo>(),
                         MemberContext = "(" + (showMethodParams ? paramList : "...") + ")",
-                        MemberType = MemberType.Constructor
+                        MemberType = MemberType.Constructor,
+                        LeadingCommentsLineCount = leadingCommentsLineCount
                     };
                 }
                 else if (member is PropertyDeclarationSyntax)
@@ -318,7 +327,8 @@ class CSharpMapper
                         Content = prop.Identifier.ValueText,
                         ContentType = "    ",
                         IsPublic = prop.Modifiers.Any(x => x.ValueText == "public" || x.ValueText == "internal"),
-                        MemberType = MemberType.Property
+                        MemberType = MemberType.Property,
+                        LeadingCommentsLineCount = leadingCommentsLineCount
                     };
                 }
                 else if (member is FieldDeclarationSyntax)
@@ -336,7 +346,8 @@ class CSharpMapper
                         Content = field.Declaration.Variables.First().Identifier.Text,
                         ContentType = "    ",
                         IsPublic = field.Modifiers.Any(x => x.ValueText == "public" || x.ValueText == "internal"),
-                        MemberType = MemberType.Field
+                        MemberType = MemberType.Field,
+                        LeadingCommentsLineCount = leadingCommentsLineCount
                     };
                 }
 
@@ -401,10 +412,49 @@ class CSharpMapper
 
         return map;
     }
+
+    private static int GetLeadingComments(SyntaxNode member)
+    {
+        var leadingTrivia = member.GetLeadingTrivia();
+        int commentLineCount = 0;
+
+        foreach (var trivia in leadingTrivia)
+        {
+            if (trivia.IsKind(SyntaxKind.SingleLineCommentTrivia) ||                // Single line comment: //
+                trivia.IsKind(SyntaxKind.MultiLineCommentTrivia))                    // Multi-line comment: /* */
+            {
+                commentLineCount += trivia.ToString().GetLinesCount();
+            }
+            else if (trivia.IsKind(SyntaxKind.SingleLineDocumentationCommentTrivia) ||   // XML documentation comments: ///
+                trivia.IsKind(SyntaxKind.MultiLineDocumentationCommentTrivia))           // Multi-line XML documentation comments
+            {
+                // even the multi-line comments are merged by the parser in the same trivia.
+                // It always adds a line break at the end so we subtract 1
+                commentLineCount += trivia.ToString().GetLinesCount() - 1;
+            }
+        }
+
+        return commentLineCount;
+    }
 }
 
 static class Extensions
 {
+    public static int GetLinesCount(this string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return 0;
+
+        // Handle different line ending formats properly
+        // Replace \r\n with \n first to avoid double-splitting on Windows line endings
+        var normalizedText = text.Replace("\r\n", "\n");
+
+        // Now split by remaining \r and \n characters
+        var lines = normalizedText.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
+
+        return lines.Length;
+    }
+
     public static (string, string) GetParentPath(this SyntaxNode type)
     {
         var namespaces = new List<string>();

@@ -3,5 +3,7 @@
 /PyMap/obj
 .vs
 .git
+**/bin/*
+**/obj/*
 packages
 /out/*.vsix

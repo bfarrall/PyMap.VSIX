@@ -432,6 +432,7 @@ namespace CodeMap
             }
         }
 
+        public int LeadingCommentsLineCount { set; get; } = 0;
         public int Line { set; get; } = -1;
         public int EndLine { set; get; } = -1;
         public bool IsInRegion { set; get; }

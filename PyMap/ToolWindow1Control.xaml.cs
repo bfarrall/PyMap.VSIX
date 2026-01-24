@@ -522,8 +522,8 @@ namespace CodeMap
         {
             var keyModifiers = Keyboard.Modifiers;
             // Only allow drag if Ctrl is pressed and all other conditions are met
-            Debug.WriteLine($"parser.CanParse(docFile):{parser.CanParse(docFile)}; parser.IsCSharp:{parser.IsCSharp}; " +
-                $"parser.SortMembers:{parser.SortMembers} || Ctrl: {(Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control}");
+            // Debug.WriteLine($"parser.CanParse(docFile):{parser.CanParse(docFile)}; parser.IsCSharp:{parser.IsCSharp}; " +
+            // $"parser.SortMembers:{parser.SortMembers} || Ctrl: {(Keyboard.Modifiers & ModifierKeys.Control) != ModifierKeys.Control}");
             if (!parser.CanParse(docFile) ||
                 !parser.IsCSharp ||
                 parser.SortMembers || (keyModifiers & ModifierKeys.Control) != ModifierKeys.Control)
@@ -610,18 +610,22 @@ namespace CodeMap
 
                         if (dest != null && src != dest && !(insertIndex > 0 && items[insertIndex - 1] == src))
                         {
-                            destLine = dest.Line;
+                            destLine = dest.Line - dest.LeadingCommentsLineCount;
                         }
                     }
                     else
                     {
                         var dest = items[items.Count - 1] as MemberInfo;
-                        destLine = dest?.EndLine + 1;
+                        destLine = dest.EndLine + 1;
                     }
 
                     if (destLine.HasValue)
                     {
-                        MoveDocumentRegionInEditor(src.Line, src.EndLine, destLine.Value);
+                        Debug.WriteLine($"-------");
+                        Debug.WriteLine($"Src: {src.Line - src.LeadingCommentsLineCount + 1}:{src.EndLine + 1}");
+                        Debug.WriteLine($"Dest: {destLine.Value + 1}");
+
+                        MoveDocumentRegionInEditor(src.Line - src.LeadingCommentsLineCount, src.EndLine, destLine.Value);
                         try { dte.ActiveDocument.Save(); }
                         catch { }
 
