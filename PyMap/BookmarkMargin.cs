@@ -26,6 +26,9 @@ namespace CodeMap
 
         public BookmarkMargin(IWpfTextViewMargin marginContainer)
         {
+            if (ToolWindow1Command.Instance == null)
+                return; // the environment is not ready yet. This constructor will be called again anyway.
+
             ToolWindowPane window = ToolWindow1Command.Instance.package.FindToolWindow(typeof(ToolWindow1), 0, true);
             ToolWindow1Control control = ((ToolWindow1)window).Content as ToolWindow1Control;
 

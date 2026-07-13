@@ -352,6 +352,51 @@ namespace CodeMap.Test
         }
 
         [Fact]
+        void ExtractRazorCode()
+        {
+            var code = """
+                @page "/items"
+                @rendermode InteractiveServer
+                @inject IDataStoreService DataStore
+                @inject DataChangeNotifier ChangeNotifier
+                @inject ProfileStateService ProfileState
+                @inject AppPreferencesService Prefs
+                @implements IDisposable
+                @using System.Threading
+
+                @code {
+                    [SupplyParameterFromQuery(Name = "profileId")]
+                    public string? QueryProfileId { get; set; }
+                }
+
+                <PageTitle>Items</PageTitle>
+
+                @code {
+                    AppData? _data;
+
+                    protected override async Task OnInitializedAsync()
+                    {
+                        ChangeNotifier.DataChanged += OnDataChanged;
+                        _data = await DataStore.LoadAsync();
+                        var initial = _data.Profiles.FirstOrDefault(p => p.Id == QueryProfileId)
+                                      ?? _data.Profiles.FirstOrDefault();
+                        _selectedProfileId = initial?.Id ?? string.Empty;
+                        ProfileState.SetProfile(initial?.Name ?? string.Empty);
+                    }
+                }
+
+                """;
+
+            var csCode = CSharpExtensions.GetCSharpCode(code.GetLines(), "WrapperClass");
+
+            Assert.True(csCode != null);
+
+            var lines = csCode.GetLines();
+            Assert.Equal("AppData? _data;", lines[1].Trim());
+            Assert.Equal("ProfileState.SetProfile(initial?.Name ?? string.Empty);", lines[^2].Trim());
+        }
+
+        [Fact]
         void CanOrderItemsByName()
         {
             var code = """

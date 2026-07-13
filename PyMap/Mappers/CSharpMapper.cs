@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 using System.Windows.Media;
 using Microsoft.CodeAnalysis;
@@ -13,6 +14,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using CodeMap;
+using Esprima.Ast;
 
 static class Ide
 {
@@ -71,12 +73,7 @@ class CSharpMapper
             var className = Path.GetFileNameWithoutExtension(file).Replace("-", "_");
             var lines = File.ReadAllLines(file);
             if (lines.Any(x => x.Contains("@code {")))
-            {
-                var htmlLines = lines.TakeWhile(x => !x.TrimStart().StartsWith("@code {"));
-                lineOffset = htmlLines.Count();
-                code = string.Join(Environment.NewLine, lines.Skip(lineOffset).Take(lines.Count() - lineOffset)); // first and last are to be removed
-                code = code.Replace("@code {", $"public class {className} {{");
-            }
+                code = CSharpExtensions.GetCSharpCode(lines, className);
             else
                 return new MemberInfo[0];
         }
@@ -438,12 +435,48 @@ class CSharpMapper
     }
 }
 
-static class Extensions
+public static class CSharpExtensions
 {
+    public static string GetCSharpCode(this string[] lines, string wrapperClass)
+    {
+        // find index of the last line that starts with "@code {"
+        var lastIndexOfCodeArea = lines
+            .Select((x, index) => new
+            {
+                index,
+                Match = x.StartsWith("@code {")
+            })
+            .Where(x => x.Match)
+            .LastOrDefault()?.index;
+
+        if (lastIndexOfCodeArea == null)
+            return "";
+
+        var emptyLinesAtEnd = lines.Reverse().TakeWhile(string.IsNullOrWhiteSpace).Count();
+
+        var lineOffset = lastIndexOfCodeArea.Value;
+
+        var buffer = new StringBuilder();
+
+        for (var i = 0; i < lineOffset - 1; i++)
+        {
+            lines[i] = "";
+        }
+
+        lines[lineOffset] = $"public class {wrapperClass} {{";
+
+        var code = string.Join(Environment.NewLine, lines);
+
+        return code;
+    }
+
     public static int GetLinesCount(this string text)
+        => text.GetLines().Length;
+
+    public static string[] GetLines(this string text)
     {
         if (string.IsNullOrEmpty(text))
-            return 0;
+            return Array.Empty<string>();
 
         // Handle different line ending formats properly
         // Replace \r\n with \n first to avoid double-splitting on Windows line endings
@@ -452,7 +485,7 @@ static class Extensions
         // Now split by remaining \r and \n characters
         var lines = normalizedText.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
 
-        return lines.Length;
+        return lines;
     }
 
     public static (string, string) GetParentPath(this SyntaxNode type)
