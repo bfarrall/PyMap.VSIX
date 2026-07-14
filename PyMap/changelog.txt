@@ -1,3 +1,9 @@
+Release v2.5.4.0
+- #33: Constant crashes
+
+Release v2.5.3.0
+- Fixed Razor parsing problem
+
 Release v2.5.2.0
 - #32: Dragging map items does not copy comments
 

@@ -1,6 +1,6 @@
-﻿using Microsoft.VisualStudio.Text.Editor;
+﻿using System.ComponentModel.Composition;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
-using System.ComponentModel.Composition;
 
 namespace CodeMap
 {
@@ -17,7 +17,13 @@ namespace CodeMap
     {
         public IWpfTextViewMargin CreateMargin(IWpfTextViewHost wpfTextViewHost, IWpfTextViewMargin marginContainer)
         {
-            return new BookmarkMargin(marginContainer);
+            try
+            {
+                if (ToolWindow1Command.Instance != null)
+                    return new BookmarkMargin(marginContainer);
+            }
+            catch { }
+            return null;
         }
     }
 }

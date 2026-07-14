@@ -98,13 +98,16 @@ namespace CodeMap
             get
             {
                 ThrowIfDisposed();
-                return Settings.Instance.ShowBookmarkMargin;
+                return Settings.Instance?.ShowBookmarkMargin ?? false;
             }
 
             set
             {
                 ThrowIfDisposed();
-                Settings.Instance.ShowBookmarkMargin = value;
+                if (Settings.Instance != null)
+                {
+                    Settings.Instance.ShowBookmarkMargin = value;
+                }
             }
         }
 
@@ -135,25 +138,33 @@ namespace CodeMap
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
-            if (Settings.Instance.ShowBookmarkMargin)
-                DrawMarkers(drawingContext);
+            try
+            {
+                if (Settings.Instance?.ShowBookmarkMargin ?? false)
+                    DrawMarkers(drawingContext);
+            }
+            catch { }
         }
 
         void DrawMarkers(DrawingContext drawingContext)
         {
-            if (_parser.MemberList is null || !_parser.MemberList.Any())
+            try
             {
-                return;
-            }
-
-            foreach (MemberInfo memberInfo in _parser.MemberList.Where(x => !string.IsNullOrEmpty(x.ColorContext)))
-            {
-                if (_palette.TryGetValue(memberInfo.ColorContext, out Brush brush))
+                if (_parser?.MemberList is null || !_parser.MemberList.Any())
                 {
-                    double y = _scrollBar.GetYCoordinateOfScrollMapPosition(memberInfo.Line);
-                    drawingContext.DrawRectangle(brush, null, new Rect(0, y, _lineWidth, _lineHeight));
+                    return;
+                }
+
+                foreach (MemberInfo memberInfo in _parser.MemberList.Where(x => !string.IsNullOrEmpty(x.ColorContext)))
+                {
+                    if (_palette.TryGetValue(memberInfo.ColorContext, out Brush brush))
+                    {
+                        double y = _scrollBar.GetYCoordinateOfScrollMapPosition(memberInfo.Line);
+                        drawingContext.DrawRectangle(brush, null, new Rect(0, y, _lineWidth, _lineHeight));
+                    }
                 }
             }
+            catch { }
         }
     }
 }
