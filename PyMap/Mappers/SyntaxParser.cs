@@ -202,7 +202,11 @@ namespace CodeMap
             mappers.Add(".pyw", PythonMapper.Generate);
             mappers.Add(".css", CssMapper.Generate);
             mappers.Add(".js", JavaScriptMapper.Generate);
-            mappers.Add(".ts", JavaScriptMapper.Generate);
+            mappers.Add(".jsx", JavaScriptMapper.Generate);
+            mappers.Add(".ts", TypeScriptMapper.Generate);
+            mappers.Add(".tsx", TypeScriptMapper.Generate);
+            mappers.Add(".mts", TypeScriptMapper.Generate);
+            mappers.Add(".cts", TypeScriptMapper.Generate);
         }
 
         public void GenerateMap(string file)
