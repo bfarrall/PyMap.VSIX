@@ -1,5 +1,4 @@
 using System;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,22 +16,31 @@ static class TypeScriptMapper
     // TypeScript-specific regexes (more permissive: generics, export default, async)
     // interface Foo { ... }
     static Regex interfaceRegex = new Regex(@"^\s*(?:export\s+)?(?:default\s+)?interface\s+([A-Za-z_][\w_]*)(?:\s*<[^>]+>)?\b", RegexOptions.Compiled);
+
     // type Foo = ...
     static Regex typeRegex = new Regex(@"^\s*(?:export\s+)?(?:default\s+)?type\s+([A-Za-z_][\w_]*)(?:\s*<[^>]+>)?\b", RegexOptions.Compiled);
+
     // enum Foo { ... }
     static Regex enumRegex = new Regex(@"^\s*(?:export\s+)?(?:default\s+)?enum\s+([A-Za-z_][\w_]*)(?:\s*<[^>]+>)?\b", RegexOptions.Compiled);
+
     // class Foo<T> { ... } optionally exported/default
     static Regex classRegex = new Regex(@"^\s*(?:export\s+)?(?:default\s+)?class\s+([A-Za-z_][\w_]*)(?:\s*<[^>]+>)?\b", RegexOptions.Compiled);
+
     // function foo<T>(...) or export function foo(...)
     static Regex functionRegex = new Regex(@"^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+([A-Za-z_][\w_]*)(?:\s*<[^>]+>)?\s*\(([^)]*)\)", RegexOptions.Compiled);
+
     // class method with optional visibility/async/readonly/static and optional return type and generics
     static Regex classMethod = new Regex(@"^(?:\s*(?:public|private|protected|static|async|readonly)\s+)*([A-Za-z_][\w_]*)(?:\s*<[^>]+>)?\s*\(([^)]*)\)\s*(?::\s*[^({]+)?\s*{", RegexOptions.Compiled);
+
     // var foo = function(...) {
     static Regex varFuncExpr = new Regex(@"^(?:export\s+)?(?:var|let|const)\s+(?:async\s+)?([A-Za-z_][\w_]*)\s*=\s*function\s*\(([^)]*)\)", RegexOptions.Compiled);
+
     // var foo = (...) => {   (handles export and async)
     static Regex varArrowFunc = new Regex(@"^(?:export\s+)?(?:var|let|const)\s+(?:async\s+)?([A-Za-z_][\w_]*)\s*=\s*\(([^)]*)\)\s*=>", RegexOptions.Compiled);
+
     // var foo = x => {
     static Regex varArrowFuncSingle = new Regex(@"^(?:export\s+)?(?:var|let|const)\s+(?:async\s+)?([A-Za-z_][\w_]*)\s*=\s*([A-Za-z_$][\w$]*)\s*=>", RegexOptions.Compiled);
+
     // property: foo: Type; or foo?: Type; or readonly foo: Type = ...
     static Regex propertyRegex = new Regex(@"^(?:\s*(?:public|private|protected|readonly|static|export)\s+)*([A-Za-z_][\w_]*)\s*[:?]\s*[^;=\{]+[;=]?", RegexOptions.Compiled);
 
