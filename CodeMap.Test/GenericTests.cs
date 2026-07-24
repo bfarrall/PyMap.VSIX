@@ -2,6 +2,14 @@ namespace CodeMap.Test
 {
     public class GenericTests
     {
+        public GenericTests()
+
+        {
+            // ensure the settings are not overwritten by the user/dev active configuration
+            Settings.Instance.StartRegionTemplate = "#start: {name}";
+            Settings.Instance.EndRegionTemplate = "#end: {name}";
+        }
+
         [Fact]
         public void CanGenerateProperItemIds()
         {
@@ -384,16 +392,15 @@ namespace CodeMap.Test
                         ProfileState.SetProfile(initial?.Name ?? string.Empty);
                     }
                 }
-
                 """;
 
             var csCode = CSharpExtensions.GetCSharpCode(code.GetLines(), "WrapperClass");
 
             Assert.True(csCode != null);
 
-            var lines = csCode.GetLines();
+            var lines = csCode.Trim().GetLines();
             Assert.Equal("AppData? _data;", lines[1].Trim());
-            Assert.Equal("ProfileState.SetProfile(initial?.Name ?? string.Empty);", lines[^2].Trim());
+            Assert.Equal("ProfileState.SetProfile(initial?.Name ?? string.Empty);", lines[^3].Trim());
         }
 
         [Fact]

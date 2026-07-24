@@ -24,6 +24,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Outlining;
 using Microsoft.VisualStudio.TextManager.Interop;
+using Microsoft.VisualStudio.Threading;
 using EnvDTE;
 using EnvDTE80;
 
@@ -113,10 +114,13 @@ namespace CodeMap
 
             this.Loaded += (s, e) =>
             {
+                // Note, the Load event handler method is not async so we cannot use await here. So we will use a task to do the work in the background.
+#pragma warning disable VSTHRD001,VSTHRD002,VSTHRD103,VSTHRD008
+
                 // with VS Version 17.14.0 something has changed and the theme is not detected correctly at startup even
                 // though the theme is set correctly in the IDE.
                 // So we need to do a manual push to the parser to set the correct theme. For 10 seconds or so.
-                Task.Run(() =>
+                var task = Task.Run(async () =>
                 {
                     for (int i = 0; i < 10; i++)
                     {
@@ -124,6 +128,7 @@ namespace CodeMap
                         Dispatcher.CurrentDispatcher.Invoke(parser.OnThemChange);
                     }
                 });
+#pragma warning restore VSTHRD001,VSTHRD002,VSTHRD103,VSTHRD008
             };
         }
 
@@ -196,10 +201,13 @@ namespace CodeMap
             // if the selection is changed, the scroll position should be changed to the default position.
             // This is to avoid jumps to most right when the member signature is too wide
 
+            // Note, the SelectionChanged event handler method is not async so we cannot use await here. So we will use a task to do the work in the background.
+#pragma warning disable VSTHRD001,VSTHRD003,VSTHRD008
             _ = Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
             {
                 codeMapList.FindChild<ScrollViewer>()?.ScrollToHorizontalOffset(0);
             }));
+#pragma warning restore VSTHRD001,VSTHRD003,VSTHRD008
         }
 
         void SettingsChanged(object sender, RoutedEventArgs e) => SaveSettings();
@@ -595,6 +603,8 @@ namespace CodeMap
 
         void codeMapList_Drop(object sender, DragEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             try
             {
                 RemoveDropAdorner();
@@ -641,7 +651,11 @@ namespace CodeMap
                         Debug.WriteLine($"Dest: {destLine.Value + 1}");
 
                         MoveDocumentRegionInEditor(src.Line - src.LeadingCommentsLineCount, src.EndLine, destLine.Value);
-                        try { dte.ActiveDocument.Save(); }
+
+                        try
+                        {
+                            dte.ActiveDocument.Save();
+                        }
                         catch { }
 
                         // cannot call RefreshMap as it will use the file to read the code not the dte

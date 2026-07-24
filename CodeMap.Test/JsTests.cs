@@ -2,6 +2,15 @@ namespace CodeMap.Test
 {
     public class JsTests
     {
+        void foo1()
+        {
+        }
+
+
+        void foo2()
+        {
+        }
+
         [Fact]
         public void OldStyleSyntax()
         {

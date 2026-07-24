@@ -107,7 +107,7 @@ class CSharpMapper
                                 .Where(x => x.Statement.Kind() == SyntaxKind.LocalFunctionStatement)
                                 .OrderBy(x => x.FullSpan.End)
                                 .ToArray();
-        var regName = "";
+
         var regions = root
             .DescendantTrivia()
             .Where(x => x.IsKind(SyntaxKind.RegionDirectiveTrivia) || x.IsKind(SyntaxKind.EndRegionDirectiveTrivia))
