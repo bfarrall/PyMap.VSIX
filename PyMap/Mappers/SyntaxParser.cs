@@ -33,7 +33,8 @@ namespace CodeMap
             if (propertyName != nameof(ErrorMessage) &&
                 propertyName != nameof(IsErrorState) &&
                 propertyName != nameof(IsCSharp) &&
-                propertyName != nameof(IsPython))
+                propertyName != nameof(IsPython) &&
+                propertyName != nameof(IsTypeScript))
             {
                 MapInvalidated?.Invoke();
             }
@@ -154,10 +155,37 @@ namespace CodeMap
 
         public bool IsCSharp
         {
-            get => isCSharp; set { isCSharp = value; OnPropertyChanged(nameof(IsCSharp)); OnPropertyChanged(nameof(IsPython)); }
+            get => isCSharp;
+            set
+            {
+                if (isCSharp == value)
+                    return;
+
+                isCSharp = value;
+                OnPropertyChanged(nameof(IsCSharp));
+                OnPropertyChanged(nameof(IsPython));
+                OnPropertyChanged(nameof(IsTypeScript));
+            }
         }
 
         public bool IsPython => !isCSharp;
+
+        bool isTypeScript = false;
+
+        public bool IsTypeScript
+        {
+            get => isTypeScript;
+            set
+            {
+                if (isTypeScript == value)
+                    return;
+
+                isTypeScript = value;
+                OnPropertyChanged(nameof(IsTypeScript));
+            }
+        }
+
+        public bool ShowTypeControls => IsCSharp || IsTypeScript;
 
         string errorMessage;
 
@@ -188,6 +216,7 @@ namespace CodeMap
 
             var fileType = Path.GetExtension(file).ToLower();
             IsCSharp = (fileType == ".cs" || fileType == ".razor");
+            IsTypeScript = (fileType == ".ts" || fileType == ".tsx" || fileType == ".mts" || fileType == ".cts");
 
             return mappers.ContainsKey(fileType);
         }
