@@ -397,7 +397,7 @@
                 <Grid.Resources>
                     <Style TargetType="CheckBox">
                         <Setter Property="Margin" Value="10,0,5,0" />
-                        <Setter Property="IsEnabled" Value="{Binding IsCSharp}" />
+                        <Setter Property="IsEnabled" Value="{Binding ShowTypeControls}" />
                         <Setter Property="VerticalAlignment" Value="Center" />
                         <Setter Property="Foreground" Value="{Binding ElementName=codeMapList, Path=Foreground}" />
                     </Style>
@@ -445,7 +445,7 @@
                     Content="Structs"
                     IsChecked="{Binding Structs}"
                     ToolTip="Show Structs"
-                    Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="Others"
@@ -455,7 +455,7 @@
                     Content="Others"
                     IsChecked="{Binding Others}"
                     ToolTip="Show any other types"
-                    Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <!--  ##########################################################  -->
                 <TextBlock
                     Grid.Row="3"
@@ -515,7 +515,7 @@
                     Grid.Row="5"
                     Grid.Column="0"
                     Text="Fields:"
-                    Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="PublicFields"
@@ -525,7 +525,7 @@
                     Content="Public"
                     IsChecked="{Binding PublicFields}"
                     ToolTip="Show public fields"
-                    Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="PrivateFields"
@@ -535,7 +535,7 @@
                     Content="Private"
                     IsChecked="{Binding PrivateFields}"
                     ToolTip="Show private fields"
-                    Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <CheckBox
                     x:Name="SortMembers"
                     Grid.Row="6"
