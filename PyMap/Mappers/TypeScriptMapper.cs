@@ -52,6 +52,20 @@ static class TypeScriptMapper
         return false;
     }
 
+    static bool IsExported(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+            return false;
+        return Regex.IsMatch(line, "\\bexport\\b");
+    }
+
+    static bool IsMemberPrivate(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+            return false;
+        return Regex.IsMatch(line, "\\b(private|protected)\\b");
+    }
+
     // TypeScript-specific Structure implementation to avoid splitting on dots inside
     // TypeScript type annotations (e.g., "UserCard: React.FC<Props>").
     public static IEnumerable<MemberInfo> StructureTs(this IEnumerable<MemberInfo> map)
@@ -396,6 +410,7 @@ static class TypeScriptMapper
             {
                 var name = match.Groups[1].Value;
                 var info = new MemberInfo { Line = parseIndex, ParentPath = "", Name = name, MemberContext = "", MemberType = MemberType.Interface, Content = name };
+                info.IsPublic = IsExported(line);
                 map.Add(info);
                 continue;
             }
@@ -404,6 +419,7 @@ static class TypeScriptMapper
             {
                 var name = match.Groups[1].Value;
                 var info = new MemberInfo { Line = parseIndex, ParentPath = "", Name = name, MemberContext = "", MemberType = MemberType.Type, Content = name };
+                info.IsPublic = IsExported(line);
                 map.Add(info);
                 continue;
             }
@@ -412,6 +428,7 @@ static class TypeScriptMapper
             {
                 var name = match.Groups[1].Value;
                 var info = new MemberInfo { Line = parseIndex, ParentPath = "", Name = name, MemberContext = "", MemberType = MemberType.Type, Content = name };
+                info.IsPublic = IsExported(line);
                 map.Add(info);
                 continue;
             }
@@ -420,6 +437,7 @@ static class TypeScriptMapper
             {
                 var name = match.Groups[1].Value;
                 var info = new MemberInfo { Line = parseIndex, ParentPath = "", Name = name, MemberContext = "", MemberType = MemberType.Class, Content = name };
+                info.IsPublic = IsExported(line);
                 map.Add(info);
                 continue;
             }
@@ -500,6 +518,8 @@ static class TypeScriptMapper
                 info.MethodParameters = match.Groups[2].Value;
                 // Content should start as the dotted name (Structure() will trim to short name)
                 info.Content = showMethodParams ? info.Name + parms : info.Name + "(...)";
+                // mark public/exported for top-level, otherwise determine from modifiers
+                info.IsPublic = string.IsNullOrEmpty(info.ParentPath) ? IsExported(line) : !IsMemberPrivate(line);
                 map.Add(info);
                 continue;
             }
@@ -557,6 +577,8 @@ static class TypeScriptMapper
                 info.MethodParameters = match.Groups[2].Value;
                 // Content should start as the dotted name (Structure() will trim to short name)
                 info.Content = showMethodParams ? info.Name + parms : info.Name + "(...)";
+                // class methods: check for private/protected modifiers on the declaration
+                info.IsPublic = !IsMemberPrivate(line);
                 map.Add(info);
                 continue;
             }
@@ -566,11 +588,11 @@ static class TypeScriptMapper
             {
                 // determine enclosing class
                 int classAncestor = FindAncestorIndexMatching(code, parseIndex, l => classRegex.IsMatch(l.TrimStart()));
-                if (classAncestor == -1)
-                {
+                    if (classAncestor == -1)
+                    {
                     // treat as top-level property if no enclosing class
                     var name = match.Groups[1].Value;
-                    var info = new MemberInfo { Line = parseIndex, MemberContext = "" };
+                        var info = new MemberInfo { Line = parseIndex, MemberContext = "" };
                     if (name.Contains('.'))
                     {
                         var parts = name.Split(new[] { '.' }, 2);
@@ -587,6 +609,7 @@ static class TypeScriptMapper
                         info.Content = name;
                     }
                     info.MemberType = MemberType.Property;
+                        info.IsPublic = IsExported(line);
                     map.Add(info);
                     continue;
                 }
@@ -609,6 +632,8 @@ static class TypeScriptMapper
                 infoProp.Name = parentTitle + "." + propName;
                 infoProp.MemberType = MemberType.Property;
                 infoProp.Content = infoProp.Name;
+                // class property: respect private/protected modifiers on the declaration
+                infoProp.IsPublic = !IsMemberPrivate(line);
                 map.Add(infoProp);
                 continue;
             }
@@ -705,6 +730,7 @@ static class TypeScriptMapper
                 info.MemberType = MemberType.Method;
                 info.MethodParameters = match.Groups[2].Value;
                 info.Content = showMethodParams ? info.Name + parms : info.Name + "(...)";
+                info.IsPublic = string.IsNullOrEmpty(info.ParentPath) ? IsExported(line) : !IsMemberPrivate(line);
                 map.Add(info);
                 continue;
             }
@@ -860,6 +886,8 @@ static class TypeScriptMapper
                             MemberType = isFuncTyped ? MemberType.Method : MemberType.Property,
                             Content = isFuncTyped ? (showMethodParams ? name + "(" + funcParams + ")" : name + "(...)") : name
                         };
+                        // inherit visibility from the parent top-level var (exported => public)
+                        infoVarProp.IsPublic = IsExported(ptrim);
                         map.Add(infoVarProp);
                         continue;
                     }
@@ -922,6 +950,7 @@ static class TypeScriptMapper
                     // If this top-level var is a typed React component, preserve the type annotation in the display Content
                     var content = IsTypedReactComponentDeclaration(rawDecl) ? nameWithType : ShortDecl(nameWithType);
                     var info = new MemberInfo { Line = parseIndex, ParentPath = "", Name = nameWithType, MemberContext = "", MemberType = MemberType.Property, Content = content };
+                    info.IsPublic = IsExported(rawDecl);
                     map.Add(info);
                 }
                 continue;
