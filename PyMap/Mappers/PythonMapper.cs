@@ -44,6 +44,7 @@ class PythonMapper
                 {
                     info.MemberContext = "";
                     info.MemberType = MemberType.Method;
+                    info.IsPublic = !line.Substring("def ".Length).Trim().StartsWith("__");
                     info.Content = showMethodParams ?
                         line.Substring("def ".Length).TrimEnd().TrimEnd(':') :
                         line.Substring("def ".Length).Split('(').First().TrimEnd() + "(...)";

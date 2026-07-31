@@ -34,7 +34,9 @@ namespace CodeMap
                 propertyName != nameof(IsErrorState) &&
                 propertyName != nameof(IsCSharp) &&
                 propertyName != nameof(IsPython) &&
-                propertyName != nameof(IsTypeScript))
+                propertyName != nameof(IsTypeScript) &&
+                propertyName != nameof(SupportInterfaces) &&
+                propertyName != nameof(ShowTypeControls))
             {
                 MapInvalidated?.Invoke();
             }
@@ -165,6 +167,8 @@ namespace CodeMap
                 OnPropertyChanged(nameof(IsCSharp));
                 OnPropertyChanged(nameof(IsPython));
                 OnPropertyChanged(nameof(IsTypeScript));
+                OnPropertyChanged(nameof(SupportInterfaces));
+                OnPropertyChanged(nameof(ShowTypeControls));
             }
         }
 
@@ -185,7 +189,13 @@ namespace CodeMap
             }
         }
 
-        public bool ShowTypeControls => IsCSharp || IsTypeScript;
+        public bool ShowTypeControls => IsCSharp || IsTypeScript || IsPython;
+
+        public bool SupportInterfaces
+        {
+            get => IsCSharp || IsTypeScript;
+            set { }
+        }
 
         string errorMessage;
 
@@ -419,6 +429,12 @@ namespace CodeMap
                 // retrying as the file might be locked
                 Thread.Sleep(400);
             }
+        }
+
+        public void RefreshConfigPanel()
+        {
+            OnPropertyChanged(nameof(SupportInterfaces));
+            OnPropertyChanged(nameof(ShowTypeControls));
         }
 
         public BitmapSource SynchIcon => AppImages.Synch;

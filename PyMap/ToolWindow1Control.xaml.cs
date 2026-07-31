@@ -412,6 +412,7 @@ namespace CodeMap
 
                         StartMonitoring(docFile);
                     }
+                    parser.RefreshConfigPanel();
                 }
                 else
                 {
