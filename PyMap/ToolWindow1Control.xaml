@@ -369,7 +369,7 @@
             Grid.Row="2"
             Margin="0,5,0,0"
             HorizontalAlignment="Left"
-            VerticalAlignment="Bottom"
+            VerticalAlignment="Top"
             Background="{Binding ElementName=codeMapList, Path=Background}"
             ExpandDirection="Up"
             FlowDirection="LeftToRight"
@@ -382,17 +382,17 @@
                     <ColumnDefinition Width="auto" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="8" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="8" />
-                    <RowDefinition Height="25" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Grid.Resources>
                     <Style TargetType="CheckBox">
@@ -458,14 +458,14 @@
                     Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <!--  ##########################################################  -->
                 <TextBlock
-                    Grid.Row="3"
+                    Grid.Row="2"
                     Grid.Column="0"
                     Text="Methods:"
                     Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="PublicMethods"
-                    Grid.Row="3"
+                    Grid.Row="2"
                     Grid.Column="1"
                     Click="SettingsChanged"
                     Content="Public"
@@ -475,8 +475,10 @@
 
                 <CheckBox
                     x:Name="PrivateMethods"
-                    Grid.Row="3"
+                    Grid.Row="2"
                     Grid.Column="2"
+                    Margin="10,9,5,0"
+                    VerticalAlignment="Top"
                     Click="SettingsChanged"
                     Content="Private"
                     IsChecked="{Binding PrivateMethods}"
@@ -484,14 +486,14 @@
                     Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <!--  ##########################################################  -->
                 <TextBlock
-                    Grid.Row="4"
+                    Grid.Row="3"
                     Grid.Column="0"
                     Text="Properties:"
                     Visibility="{Binding ShowTypeControls, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="PublicProperties"
-                    Grid.Row="4"
+                    Grid.Row="3"
                     Grid.Column="1"
                     Click="SettingsChanged"
                     Content="Public"
@@ -501,7 +503,7 @@
 
                 <CheckBox
                     x:Name="PrivateProperties"
-                    Grid.Row="4"
+                    Grid.Row="3"
                     Grid.Column="2"
                     Click="SettingsChanged"
                     Content="Private"
@@ -512,14 +514,14 @@
                 <!--  ##########################################################  -->
 
                 <TextBlock
-                    Grid.Row="5"
+                    Grid.Row="4"
                     Grid.Column="0"
                     Text="Fields:"
                     Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="PublicFields"
-                    Grid.Row="5"
+                    Grid.Row="4"
                     Grid.Column="1"
                     Click="SettingsChanged"
                     Content="Public"
@@ -529,7 +531,7 @@
 
                 <CheckBox
                     x:Name="PrivateFields"
-                    Grid.Row="5"
+                    Grid.Row="4"
                     Grid.Column="2"
                     Click="SettingsChanged"
                     Content="Private"
@@ -538,7 +540,7 @@
                     Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <CheckBox
                     x:Name="SortMembers"
-                    Grid.Row="6"
+                    Grid.Row="5"
                     Grid.Column="1"
                     Click="SettingsChanged"
                     Content="Sort"
@@ -548,7 +550,7 @@
 
                 <CheckBox
                     x:Name="AutoSynch"
-                    Grid.Row="6"
+                    Grid.Row="5"
                     Grid.Column="2"
                     Click="SettingsChanged"
                     Content="Auto-Sync"
@@ -557,7 +559,7 @@
                     ToolTip="Auto-synchronize map tree with the code view on the change of the caret position." />
                 <CheckBox
                     x:Name="ShowMethodSignatures"
-                    Grid.Row="7"
+                    Grid.Row="6"
                     Grid.Column="1"
                     Grid.ColumnSpan="2"
                     Click="SettingsChanged"
@@ -569,14 +571,14 @@
                 <!--  ##########################################################  -->
 
                 <TextBlock
-                    Grid.Row="9"
+                    Grid.Row="8"
                     Grid.Column="0"
                     Text="Regions:"
                     Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <CheckBox
                     x:Name="StartRegion"
-                    Grid.Row="9"
+                    Grid.Row="8"
                     Grid.Column="1"
                     Click="SettingsChanged"
                     IsChecked="{Binding UseStartRegion}"
@@ -586,7 +588,7 @@
                     Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <Grid
-                    Grid.Row="9"
+                    Grid.Row="8"
                     Grid.Column="1"
                     Grid.ColumnSpan="2"
                     Margin="30,0,10,0"
@@ -606,7 +608,7 @@
 
                 <CheckBox
                     x:Name="EndRegion"
-                    Grid.Row="10"
+                    Grid.Row="9"
                     Grid.Column="1"
                     Click="SettingsChanged"
                     IsChecked="{Binding UseEndRegion}"
@@ -615,7 +617,7 @@
                     ToolTipService.ShowOnDisabled="True"
                     Visibility="{Binding IsCSharp, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <Grid
-                    Grid.Row="10"
+                    Grid.Row="9"
                     Grid.Column="1"
                     Grid.ColumnSpan="2"
                     Margin="30,0,10,0"

@@ -73,7 +73,7 @@ static class TypeScriptMapper
         var all = map.ToList();
         var roots = new List<MemberInfo>();
         // Build a lookup of names to original items for accurate parent matching
-        var nameLookup = all.ToDictionary(x => x.Name, x => x);
+        var nameLookup = all.ToDictionary(x => $"{x.Name}:{x.Line}", x => x);
 
         foreach (var item in all)
         {
@@ -83,20 +83,26 @@ static class TypeScriptMapper
             bool attached = false;
             while (scanPos > 0)
             {
-                var candidateParent = content.Substring(0, scanPos);
-                if (nameLookup.ContainsKey(candidateParent))
+                var candidateParentName = content.Substring(0, scanPos);
+                var possibleParents = nameLookup.Keys.Where(k => k.StartsWith($"{candidateParentName}:"));
+
+                var found = false;
+                foreach (var possibleParentKey in possibleParents)
                 {
-                    var parent = nameLookup[candidateParent];
+                    var parent = nameLookup[possibleParentKey];
                     parent.Children.Add(item);
-                    item.ParentPath = candidateParent;
-                    if (item.Content.Length > candidateParent.Length)
-                        item.Content = item.Content.Substring(candidateParent.Length).TrimStart('.');
+                    item.ParentPath = candidateParentName;
+                    if (item.Content.Length > candidateParentName.Length)
+                        item.Content = item.Content.Substring(candidateParentName.Length).TrimStart('.');
                     else
                         item.Content = item.Content.TrimStart('.');
                     item.ContentType = "    ";
                     attached = true;
+                    found = true;
                     break;
                 }
+                if (found)
+                    break;
                 scanPos = content.LastIndexOf('.', scanPos - 1);
             }
 
@@ -212,15 +218,20 @@ static class TypeScriptMapper
     // var foo = (...) => {   (handles export and async)
     // var foo = (...) => {   (handles export, async and optional TypeScript type annotation)
     static Regex varArrowFunc = new Regex(@"^(?:export\s+)?(?:var|let|const)\s+(?:async\s+)?([A-Za-z_][\w_]*)(?:\s*:\s*[^=]+)?\s*=\s*\(([^)]*)\)\s*=>", RegexOptions.Compiled);
+
     // var foo = x => {
     static Regex varArrowFuncSingle = new Regex(@"^(?:export\s+)?(?:var|let|const)\s+(?:async\s+)?([A-Za-z_][\w_]*)(?:\s*:\s*[^=]+)?\s*=\s*([A-Za-z_$][\w$]*)\s*=>", RegexOptions.Compiled);
+
     // class property arrow functions: increment = () => { } or increment = x => { }
     static Regex classPropArrow = new Regex(@"^(?:\s*(?:public|private|protected|readonly|static)\s+)*([A-Za-z_][\w_]*)\s*=\s*\(([^)]*)\)\s*=>", RegexOptions.Compiled);
+
     static Regex classPropArrowSingle = new Regex(@"^(?:\s*(?:public|private|protected|readonly|static)\s+)*([A-Za-z_][\w_]*)\s*=\s*([A-Za-z_$][\w$]*)\s*=>", RegexOptions.Compiled);
+
     // property: foo: Type; or foo?: Type; or readonly foo: Type = ...
     // Do not match method signatures (e.g., foo(): Type;) — ensure no '(' follows the name or optional '?'
     // Allow trailing comma for object literal properties.
     static Regex propertyRegex = new Regex(@"^(?:\s*(?:public|private|protected|readonly|static|export)\s+)*([A-Za-z_][\w_]*)(?:\?)?\s*(?!\()\s*[:?]\s*[^,;=\{]+[,;]?", RegexOptions.Compiled);
+
     // top-level const/let/var with optional type annotation
     static Regex topLevelVarRegex = new Regex(@"^(?:export\s+)?(?:const|let|var)\s+([A-Za-z_][\w_]*)(?:\s*:\s*[^=;]+)?\s*(?:=|;)", RegexOptions.Compiled);
 
@@ -588,11 +599,11 @@ static class TypeScriptMapper
             {
                 // determine enclosing class
                 int classAncestor = FindAncestorIndexMatching(code, parseIndex, l => classRegex.IsMatch(l.TrimStart()));
-                    if (classAncestor == -1)
-                    {
+                if (classAncestor == -1)
+                {
                     // treat as top-level property if no enclosing class
                     var name = match.Groups[1].Value;
-                        var info = new MemberInfo { Line = parseIndex, MemberContext = "" };
+                    var info = new MemberInfo { Line = parseIndex, MemberContext = "" };
                     if (name.Contains('.'))
                     {
                         var parts = name.Split(new[] { '.' }, 2);
@@ -609,7 +620,7 @@ static class TypeScriptMapper
                         info.Content = name;
                     }
                     info.MemberType = MemberType.Property;
-                        info.IsPublic = IsExported(line);
+                    info.IsPublic = IsExported(line);
                     map.Add(info);
                     continue;
                 }
@@ -643,9 +654,9 @@ static class TypeScriptMapper
                 var name = match.Groups[1].Value;
                 var parms = "(" + match.Groups[2].Value + ")";
 
-                    var parentIndex = ParentLineIndexOf(code, parseIndex);
-                    if (parentIndex != -1)
-                    {
+                var parentIndex = ParentLineIndexOf(code, parseIndex);
+                if (parentIndex != -1)
+                {
                     int componentAncestor = FindAncestorIndexMatching(code, parseIndex, l => IsDeclarationFunctionOrClass(l));
                     if (componentAncestor != -1)
                     {
@@ -659,7 +670,7 @@ static class TypeScriptMapper
                         if (returnIndex != -1 && parseIndex >= returnIndex)
                             continue;
                     }
-                        var parent = code[parentIndex];
+                    var parent = code[parentIndex];
 
                     var ptrim = parent.TrimStart();
                     // only treat as nested when parent is a function-like declaration
@@ -798,36 +809,36 @@ static class TypeScriptMapper
                     }
                 }
 
-    // Treat const arrow declarations as properties and append any type annotation present
-    var rawDecl = code[parseIndex].TrimStart();
-    bool isConstDecl = rawDecl.StartsWith("const ") || rawDecl.StartsWith("let ") || rawDecl.StartsWith("export const ") || rawDecl.StartsWith("export let ");
-    bool isComponentDecl = IsTypedReactComponentDeclaration(rawDecl);
-    var info = new MemberInfo { Line = parseIndex, MemberContext = "" };
-    if (name.Contains('.'))
-    {
-        var parts = name.Split(new[] { '.' }, 2);
-        info.ParentPath = parts[0];
-        // store dotted name so Structure() can group under the parent (e.g., Class.Member)
-        info.Name = parts[0] + "." + parts[1];
-        // Content should start as the dotted name so Structure() can trim to the short name
-        info.Content = info.Name;
-    }
-    else
-    {
-        info.ParentPath = "";
-        var nameWithType = AppendTypeAnnotation(rawDecl, name);
-        info.Name = nameWithType;
-        // Content should preserve the type annotation for typed React components,
-        // otherwise show a short, user-facing name without 'const' or type annotation
-        info.Content = isComponentDecl ? nameWithType : ShortDecl(nameWithType);
-    }
-    info.MemberType = isConstDecl ? MemberType.Property : (isComponentDecl ? MemberType.Property : MemberType.Method);
-    info.MethodParameters = match.Groups.Count > 2 ? match.Groups[2].Value : "";
-    // For display: methods show parameters; consts/components keep the short name (with type if present)
-    if (!isConstDecl && !isComponentDecl)
-        info.Content = showMethodParams ? info.Content + parms : info.Content + "(...)";
-    map.Add(info);
-    continue;
+                // Treat const arrow declarations as properties and append any type annotation present
+                var rawDecl = code[parseIndex].TrimStart();
+                bool isConstDecl = rawDecl.StartsWith("const ") || rawDecl.StartsWith("let ") || rawDecl.StartsWith("export const ") || rawDecl.StartsWith("export let ");
+                bool isComponentDecl = IsTypedReactComponentDeclaration(rawDecl);
+                var info = new MemberInfo { Line = parseIndex, MemberContext = "" };
+                if (name.Contains('.'))
+                {
+                    var parts = name.Split(new[] { '.' }, 2);
+                    info.ParentPath = parts[0];
+                    // store dotted name so Structure() can group under the parent (e.g., Class.Member)
+                    info.Name = parts[0] + "." + parts[1];
+                    // Content should start as the dotted name so Structure() can trim to the short name
+                    info.Content = info.Name;
+                }
+                else
+                {
+                    info.ParentPath = "";
+                    var nameWithType = AppendTypeAnnotation(rawDecl, name);
+                    info.Name = nameWithType;
+                    // Content should preserve the type annotation for typed React components,
+                    // otherwise show a short, user-facing name without 'const' or type annotation
+                    info.Content = isComponentDecl ? nameWithType : ShortDecl(nameWithType);
+                }
+                info.MemberType = isConstDecl ? MemberType.Property : (isComponentDecl ? MemberType.Property : MemberType.Method);
+                info.MethodParameters = match.Groups.Count > 2 ? match.Groups[2].Value : "";
+                // For display: methods show parameters; consts/components keep the short name (with type if present)
+                if (!isConstDecl && !isComponentDecl)
+                    info.Content = showMethodParams ? info.Content + parms : info.Content + "(...)";
+                map.Add(info);
+                continue;
             }
 
             if ((match = propertyRegex.Match(line)).Success)

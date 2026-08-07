@@ -1,5 +1,6 @@
-using Xunit;
 using System.Linq;
+using Microsoft.VisualStudio.Text.Tagging;
+using Xunit;
 
 namespace CodeMap.Test
 {
@@ -35,6 +36,34 @@ namespace CodeMap.Test
             }
 
             Assert.NotEmpty(items);
+        }
+
+        [Fact]
+        public void UpdatedMapper_PR37()
+        {
+            var code = """
+            export function actual_output(element: string, index: any, array: any) {
+                // ignore mono test output that comes from older releases(s)  (known Mono issue)
+                return (
+                    !element.startsWith('failed to get 100ns ticks') &&
+                    !element.startsWith('Mono pdb to mdb debug symbol store converter') &&
+                    !element.startsWith('Usage: pdb2mdb assembly'));
+            }
+
+            export type BuiltInCommands = 'vscode.open' | 'setContext' | 'workbench.action.closeActiveEditor' | 'workbench.action.nextEditor';
+            export const BuiltInCommands = {
+                CloseActiveEditor: 'workbench.action.closeActiveEditor' as BuiltInCommands,
+                NextEditor: 'workbench.action.nextEditor' as BuiltInCommands,
+                Open: 'vscode.open' as BuiltInCommands,
+                SetContext: 'setContext' as BuiltInCommands
+            };
+            """;
+
+            var map = TypeScriptMapper.Generate(code.GetLines(), true);
+
+            var members = map.StructureTs();
+
+            // no exception on duplicated `BuiltInCommands` keys
         }
     }
 }

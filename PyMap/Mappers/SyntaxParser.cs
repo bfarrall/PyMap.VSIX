@@ -191,11 +191,7 @@ namespace CodeMap
 
         public bool ShowTypeControls => IsCSharp || IsTypeScript || IsPython;
 
-        public bool SupportInterfaces
-        {
-            get => IsCSharp || IsTypeScript;
-            set { }
-        }
+        public bool SupportInterfaces => IsCSharp || IsTypeScript;
 
         string errorMessage;
 
